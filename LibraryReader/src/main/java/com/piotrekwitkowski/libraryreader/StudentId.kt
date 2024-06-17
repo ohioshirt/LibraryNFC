@@ -10,7 +10,7 @@ import com.piotrekwitkowski.nfc.desfire.AID
 import java.io.IOException
 
 internal class StudentId private constructor(private val isoDep: IsoDep) {
-    internal enum class idForm {
+    internal enum class IdForm {
         PHYSICAL, HCE
     }
 
@@ -51,9 +51,9 @@ internal class StudentId private constructor(private val isoDep: IsoDep) {
             val idForm = getIdForm(isoDep)
             i(TAG, "ID form: $idForm")
 
-            return if (idForm == StudentId.idForm.PHYSICAL) {
+            return if (idForm == IdForm.PHYSICAL) {
                 StudentId(isoDep)
-            } else if (idForm == StudentId.idForm.HCE) {
+            } else if (idForm == IdForm.HCE) {
                 val response = HCE.selectAndroidApp(context, isoDep)
                 if (response?.bytes.contentEquals(Iso7816.RESPONSE_SUCCESS)) {
                     StudentId(isoDep)
@@ -66,16 +66,16 @@ internal class StudentId private constructor(private val isoDep: IsoDep) {
         }
 
         @Throws(StudentIdException::class)
-        private fun getIdForm(isoDep: IsoDep): idForm {
+        private fun getIdForm(isoDep: IsoDep): IdForm {
             i(TAG, "getIdForm()")
 
             val historicalBytes = isoDep.historicalBytes
             i(TAG, "historicalBytes: " + toHexString(historicalBytes))
 
             return if (historicalBytes.contentEquals(byteArrayOf(0x80.toByte()))) {
-                idForm.PHYSICAL
+                IdForm.PHYSICAL
             } else if (historicalBytes.contentEquals(byteArrayOf())) {
-                idForm.HCE
+                IdForm.HCE
             } else {
                 throw StudentIdException("id form not recognized")
             }
