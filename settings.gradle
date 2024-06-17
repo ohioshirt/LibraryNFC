@@ -1,5 +1,0 @@
-rootProject.name='Library NFC'
-include ':LibraryReader'
-include ':nfc'
-include ':log'
-include ':LibraryHCE'
