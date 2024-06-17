@@ -1,10 +1,5 @@
-package com.piotrekwitkowski.libraryhce.application;
+package com.piotrekwitkowski.libraryhce.application
 
-import com.piotrekwitkowski.nfc.desfire.AID;
-import com.piotrekwitkowski.nfc.desfire.InvalidParameterException;
+import com.piotrekwitkowski.nfc.desfire.AID
 
-class LibraryAID extends AID {
-    LibraryAID() throws InvalidParameterException {
-        super("015548");
-    }
-}
+internal class LibraryAID : AID("015548")

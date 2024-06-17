@@ -1,22 +1,20 @@
-package com.piotrekwitkowski.libraryreader;
+package com.piotrekwitkowski.libraryreader
 
-import android.content.Context;
+import android.content.Context
+import com.piotrekwitkowski.log.Log.i
+import com.piotrekwitkowski.nfc.ByteUtils.toByteArray
+import com.piotrekwitkowski.nfc.Iso7816.wrapApdu
+import java.io.IOException
 
-import com.piotrekwitkowski.log.Log;
-import com.piotrekwitkowski.nfc.ByteUtils;
+internal object HCE {
+    private const val TAG = "HCE"
 
-import java.io.IOException;
+    @Throws(IOException::class)
+    fun selectAndroidApp(context: Context, isoDep: IsoDep): Response? {
+        i(TAG, "selectAndroidApp()")
 
-import static com.piotrekwitkowski.nfc.Iso7816.wrapApdu;
-
-class HCE {
-    private static final String TAG = "HCE";
-
-    static Response selectAndroidApp(Context context, IsoDep isoDep) throws IOException {
-        Log.i(TAG, "selectAndroidApp()");
-
-        String HCE_AID = context.getString(com.piotrekwitkowski.nfc.R.string.hce_aid);
-        byte[] commandApdu = wrapApdu(ByteUtils.toByteArray(HCE_AID));
-        return isoDep.transceive(commandApdu);
+        val HCE_AID = context.getString(com.piotrekwitkowski.nfc.R.string.hce_aid)
+        val commandApdu = wrapApdu(toByteArray(HCE_AID))
+        return isoDep.transceive(commandApdu)
     }
 }

@@ -1,87 +1,105 @@
-package com.piotrekwitkowski.nfc.se.states;
+package com.piotrekwitkowski.nfc.se.states
 
-import com.piotrekwitkowski.log.Log;
-import com.piotrekwitkowski.nfc.ByteUtils;
-import com.piotrekwitkowski.nfc.desfire.Commands;
-import com.piotrekwitkowski.nfc.desfire.ResponseCodes;
-import com.piotrekwitkowski.nfc.se.Command;
-import com.piotrekwitkowski.nfc.se.Application;
-import com.piotrekwitkowski.nfc.se.Authentication;
-import com.piotrekwitkowski.nfc.se.AuthenticationException;
-import com.piotrekwitkowski.nfc.se.AuthenticationResponse;
-import com.piotrekwitkowski.nfc.se.NoSuchKeyException;
+import com.piotrekwitkowski.log.Log
+import com.piotrekwitkowski.nfc.ByteUtils
+import com.piotrekwitkowski.nfc.desfire.Commands
+import com.piotrekwitkowski.nfc.desfire.ResponseCodes
+import com.piotrekwitkowski.nfc.se.Application
+import com.piotrekwitkowski.nfc.se.Authentication
+import com.piotrekwitkowski.nfc.se.AuthenticationException
+import com.piotrekwitkowski.nfc.se.Command
+import com.piotrekwitkowski.nfc.se.NoSuchKeyException
 
-public class ApplicationSelectedState extends State {
-    private static final String TAG = "ApplicationSelectedState";
-    private final Application application;
-    private boolean authenticationInProgress = false;
-    private Authentication authentication;
+class ApplicationSelectedState internal constructor(private val application: Application) :
+    State() {
+    private var authenticationInProgress = false
+    private var authentication: Authentication? = null
 
-    ApplicationSelectedState(Application application) {
-        this.application = application;
-    }
+    override fun processCommand(command: Command): CommandResult {
+        Log.i(TAG, "processCommand()")
 
-    public CommandResult processCommand(Command command) {
-        Log.i(TAG, "processCommand()");
+        val commandCode = command.code
+        val commandData = command.data
 
-        byte commandCode = command.getCode();
-        byte[] commandData = command.getData();
-
-        try {
+        return try {
             if (!authenticationInProgress && commandCode == Commands.AUTHENTICATE_AES) {
-                return new CommandResult(this, ByteUtils.concatenate(ResponseCodes.ADDITIONAL_FRAME, initiateAESAuthentication(commandData)));
+                CommandResult(
+                    this,
+                    ByteUtils.concatenate(
+                        ResponseCodes.ADDITIONAL_FRAME,
+                        initiateAESAuthentication(commandData)
+                    )
+                )
             } else if (authenticationInProgress && commandCode == Commands.ADDITIONAL_FRAME) {
-                return proceedAuthentication(commandData);
+                proceedAuthentication(commandData)
             } else {
-                return new CommandResult(this, ResponseCodes.ILLEGAL_COMMAND);
+                CommandResult(this, ResponseCodes.ILLEGAL_COMMAND)
             }
-        } catch (AuthenticationException e) {
-            return new CommandResult(this, ResponseCodes.AUTHENTICATION_ERROR);
-        } catch (CommandDataLengthException e) {
-            return new CommandResult(this, ResponseCodes.LENGTH_ERROR);
-        } catch (NoSuchKeyException e) {
-            return new CommandResult(this, ResponseCodes.NO_SUCH_KEY);
+        } catch (e: AuthenticationException) {
+            CommandResult(this, ResponseCodes.AUTHENTICATION_ERROR)
+        } catch (e: CommandDataLengthException) {
+            CommandResult(this, ResponseCodes.LENGTH_ERROR)
+        } catch (e: NoSuchKeyException) {
+            CommandResult(this, ResponseCodes.NO_SUCH_KEY)
         }
     }
 
-    private byte[] initiateAESAuthentication(byte[] commandData) throws AuthenticationException, CommandDataLengthException, NoSuchKeyException {
-        if (commandData.length == 1) {
-            byte[] challenge = getChallenge(commandData[0]);
-            Log.i(TAG, "challenge: " + ByteUtils.toHexString(challenge));
-            this.authenticationInProgress = true;
-            return challenge;
+    @Throws(
+        AuthenticationException::class,
+        CommandDataLengthException::class,
+        NoSuchKeyException::class
+    )
+    private fun initiateAESAuthentication(commandData: ByteArray?): ByteArray? {
+        if (commandData!!.size == 1) {
+            val challenge = getChallenge(commandData[0])
+            Log.i(TAG, "challenge: " + ByteUtils.toHexString(challenge))
+            this.authenticationInProgress = true
+            return challenge
         } else {
-            throw new CommandDataLengthException();
+            throw CommandDataLengthException()
         }
     }
 
-    private byte[] getChallenge(byte keyNumber) throws AuthenticationException, NoSuchKeyException {
-        Log.i(TAG, "proceedAuthentication() " + keyNumber);
+    @Throws(AuthenticationException::class, NoSuchKeyException::class)
+    private fun getChallenge(keyNumber: Byte): ByteArray? {
+        Log.i(TAG, "proceedAuthentication() $keyNumber")
 
         try {
-            this.authentication = new Authentication(this.application);
-            return this.authentication.initiate(keyNumber);
-        } catch (NoSuchKeyException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new AuthenticationException();
+            this.authentication = Authentication(this.application)
+            return authentication!!.initiate(keyNumber)
+        } catch (e: NoSuchKeyException) {
+            throw e
+        } catch (e: Exception) {
+            throw AuthenticationException()
         }
     }
 
-    private CommandResult proceedAuthentication(byte[] readerChallenge) throws AuthenticationException, CommandDataLengthException {
-        Log.i(TAG, "proceedAuthentication() " + readerChallenge.length);
-        if (readerChallenge.length == 32) {
+    @Throws(AuthenticationException::class, CommandDataLengthException::class)
+    private fun proceedAuthentication(readerChallenge: ByteArray?): CommandResult {
+        Log.i(TAG, "proceedAuthentication() " + readerChallenge!!.size)
+        if (readerChallenge.size == 32) {
             try {
-                AuthenticationResponse authenticationResponse = this.authentication.proceed(readerChallenge);
-                this.authenticationInProgress = false;
-                byte[] response = ByteUtils.concatenate(ResponseCodes.SUCCESS, authenticationResponse.getEncryptedRotatedA());
-                return new CommandResult(new ApplicationAuthenticatedState(this.application, authenticationResponse.getSessionKey()), response);
-            } catch (Exception e) {
-                throw new AuthenticationException();
+                val authenticationResponse =
+                    authentication!!.proceed(readerChallenge)
+                this.authenticationInProgress = false
+                val response = ByteUtils.concatenate(
+                    ResponseCodes.SUCCESS,
+                    authenticationResponse.encryptedRotatedA
+                )
+                return CommandResult(
+                    ApplicationAuthenticatedState(
+                        this.application, authenticationResponse.sessionKey
+                    ), response
+                )
+            } catch (e: Exception) {
+                throw AuthenticationException()
             }
         } else {
-            throw new CommandDataLengthException();
+            throw CommandDataLengthException()
         }
     }
 
+    companion object {
+        private const val TAG = "ApplicationSelectedState"
+    }
 }

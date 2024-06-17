@@ -1,30 +1,36 @@
-package com.piotrekwitkowski.log;
+package com.piotrekwitkowski.log
 
-import android.annotation.SuppressLint;
-import android.os.Handler;
-import android.os.Looper;
-import android.widget.TextView;
+import android.annotation.SuppressLint
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import android.widget.TextView
 
 @SuppressLint("SetTextI18n")
-public class Log {
+object Log {
     @SuppressLint("StaticFieldLeak")
-    private static TextView logTextView;
+    private var logTextView: TextView? = null
 
-    public static void setLogTextView(TextView tv) {
-        logTextView = tv;
+    @JvmStatic
+    fun setLogTextView(tv: TextView?) {
+        logTextView = tv
     }
 
-    public static void i(final String tag, final String msg) {
-        android.util.Log.i(tag, msg);
-        new Handler(Looper.getMainLooper()).post(() -> logTextView.setText(logTextView.getText() + format(tag, msg)));
+    @JvmStatic
+    fun i(tag: String, msg: String) {
+        Log.i(tag, msg)
+        Handler(Looper.getMainLooper()).post {
+            logTextView!!.text = logTextView!!.text.toString() + format(tag, msg)
+        }
     }
 
-    public static void reset(final String tag, final String msg) {
-        android.util.Log.i(tag, msg);
-        new Handler(Looper.getMainLooper()).post(() -> logTextView.setText(format(tag, msg)));
+    @JvmStatic
+    fun reset(tag: String, msg: String) {
+        Log.i(tag, msg)
+        Handler(Looper.getMainLooper()).post { logTextView!!.text = format(tag, msg) }
     }
 
-    private static String format(String tag, String msg) {
-        return tag + ": " + msg + '\n';
+    private fun format(tag: String, msg: String): String {
+        return "$tag: $msg\n"
     }
 }

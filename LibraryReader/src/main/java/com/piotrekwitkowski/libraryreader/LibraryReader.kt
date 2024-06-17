@@ -1,43 +1,43 @@
-package com.piotrekwitkowski.libraryreader;
+package com.piotrekwitkowski.libraryreader
 
-import android.content.Context;
-import android.nfc.Tag;
+import android.content.Context
+import android.nfc.Tag
+import com.piotrekwitkowski.log.Log.i
+import com.piotrekwitkowski.nfc.desfire.AESKey
+import com.piotrekwitkowski.nfc.desfire.AID
+import com.piotrekwitkowski.nfc.desfire.InvalidParameterException
 
-import com.piotrekwitkowski.log.Log;
-import com.piotrekwitkowski.nfc.desfire.AID;
-import com.piotrekwitkowski.nfc.desfire.InvalidParameterException;
-import com.piotrekwitkowski.nfc.desfire.AESKey;
+internal class LibraryReader(private val context: Context) {
+    @Throws(InvalidParameterException::class)
+    fun processTag(tag: Tag?) {
+        i(TAG, "processTag()")
 
-class LibraryReader {
-    private static final String TAG = "LibraryReader";
-    private final Context context;
-
-    LibraryReader(Context ctx) {
-        this.context = ctx;
-    }
-
-    void processTag(Tag tag) throws InvalidParameterException {
-        Log.i(TAG, "processTag()");
-
-        final AID LIBRARY_AID = new AID("015548");
-        final AESKey LIBRARY_KEY = new AESKey("00000000000000000000000000000000");
-        final int LIBRARY_KEY_NUMBER = 0;
-        final int FILE_NUMBER = 0;
-        final int FILE_OFFSET = 10;
-        final int FILE_LENGTH = 12;
-        final IsoDep isoDep = IsoDep.get(tag);
+        val LIBRARY_AID = AID("015548")
+        val LIBRARY_KEY = AESKey("00000000000000000000000000000000")
+        val LIBRARY_KEY_NUMBER = 0
+        val FILE_NUMBER = 0
+        val FILE_OFFSET = 10
+        val FILE_LENGTH = 12
+        val isoDep: IsoDep = IsoDep.Companion.get(tag)
 
         try {
-            StudentId studentId = StudentId.getStudentId(this.context, isoDep);
-            studentId.selectApplication(LIBRARY_AID);
-            studentId.authenticateAES(LIBRARY_KEY, LIBRARY_KEY_NUMBER);
-            byte[] libraryId = studentId.readData(FILE_NUMBER, FILE_OFFSET, FILE_LENGTH);
-            Log.i(TAG, "libraryId: " + new String(libraryId));
+            val studentId: StudentId = StudentId.Companion.getStudentId(this.context, isoDep)
+            studentId.selectApplication(LIBRARY_AID)
+            studentId.authenticateAES(LIBRARY_KEY, LIBRARY_KEY_NUMBER)
+            val libraryId = studentId.readData(FILE_NUMBER, FILE_OFFSET, FILE_LENGTH)
+            i(
+                TAG, "libraryId: " + String(
+                    libraryId!!
+                )
+            )
 
-            studentId.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            studentId.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
+    companion object {
+        private const val TAG = "LibraryReader"
+    }
 }

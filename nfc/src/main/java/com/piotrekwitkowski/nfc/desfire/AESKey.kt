@@ -1,19 +1,16 @@
-package com.piotrekwitkowski.nfc.desfire;
+package com.piotrekwitkowski.nfc.desfire
 
-import com.piotrekwitkowski.nfc.ByteUtils;
+import com.piotrekwitkowski.nfc.ByteUtils
 
-public class AESKey {
-    private final byte[] key;
+open class AESKey(key: String) {
+    @JvmField
+    val key: ByteArray?
 
-    public AESKey(String key) throws InvalidParameterException {
-        if (key.length() == 32) {
-            this.key = ByteUtils.toByteArray(key);
+    init {
+        if (key.length == 32) {
+            this.key = ByteUtils.toByteArray(key)
         } else {
-            throw new InvalidParameterException("AES key length should be 32 chars");
+            throw InvalidParameterException("AES key length should be 32 chars")
         }
-    }
-
-    public byte[] getKey() {
-        return key;
     }
 }

@@ -1,52 +1,52 @@
-package com.piotrekwitkowski.nfc.se.states;
+package com.piotrekwitkowski.nfc.se.states
 
-import com.piotrekwitkowski.log.Log;
-import com.piotrekwitkowski.nfc.se.Command;
-import com.piotrekwitkowski.nfc.desfire.Commands;
-import com.piotrekwitkowski.nfc.desfire.ResponseCodes;
-import com.piotrekwitkowski.nfc.desfire.AID;
-import com.piotrekwitkowski.nfc.desfire.InvalidParameterException;
-import com.piotrekwitkowski.nfc.se.Application;
+import com.piotrekwitkowski.log.Log
+import com.piotrekwitkowski.nfc.desfire.AID
+import com.piotrekwitkowski.nfc.desfire.Commands
+import com.piotrekwitkowski.nfc.desfire.InvalidParameterException
+import com.piotrekwitkowski.nfc.desfire.ResponseCodes
+import com.piotrekwitkowski.nfc.se.Application
+import com.piotrekwitkowski.nfc.se.Command
 
-public class InitialState extends State {
-    private static final String TAG = "InitialState";
-    private final Application[] applications;
+class InitialState(private val applications: Array<Application>) : State() {
+    override fun processCommand(command: Command): CommandResult {
+        Log.i(TAG, "processCommand()")
 
-    public InitialState(Application[] applications) {
-        this.applications = applications;
-    }
-
-    public CommandResult processCommand(Command command) {
-        Log.i(TAG, "processCommand()");
-
-        if (command.getCode() == Commands.SELECT_APPLICATION) {
-            return selectApplication(command.getData());
+        return if (command.code == Commands.SELECT_APPLICATION) {
+            selectApplication(command.data)
         } else {
-            return new CommandResult(this, ResponseCodes.ILLEGAL_COMMAND);
+            CommandResult(
+                this,
+                ResponseCodes.ILLEGAL_COMMAND
+            )
         }
     }
 
-    private CommandResult selectApplication(byte[] aid) {
-        Log.i(TAG, "selectApplication()");
+    private fun selectApplication(aid: ByteArray?): CommandResult {
+        Log.i(TAG, "selectApplication()")
 
         try {
-            AID aidToSelect = new AID(aid);
-            return new CommandResult(selectApplication(aidToSelect), ResponseCodes.SUCCESS);
-        } catch (InvalidParameterException ex) {
-            return new CommandResult(this, ResponseCodes.LENGTH_ERROR);
-        } catch (ApplicationNotFoundException ex) {
-            return new CommandResult(this, ResponseCodes.APPLICATION_NOT_FOUND);
+            val aidToSelect = AID(aid)
+            return CommandResult(selectApplication(aidToSelect), ResponseCodes.SUCCESS)
+        } catch (ex: InvalidParameterException) {
+            return CommandResult(this, ResponseCodes.LENGTH_ERROR)
+        } catch (ex: ApplicationNotFoundException) {
+            return CommandResult(this, ResponseCodes.APPLICATION_NOT_FOUND)
         }
     }
 
-    private ApplicationSelectedState selectApplication(AID aidToSelect) throws ApplicationNotFoundException {
-        Log.i(TAG, "selectApplication()");
-        for (Application a : applications) {
-            if (a.getAid().equals(aidToSelect)) {
-                return new ApplicationSelectedState(a);
+    @Throws(ApplicationNotFoundException::class)
+    private fun selectApplication(aidToSelect: AID): ApplicationSelectedState {
+        Log.i(TAG, "selectApplication()")
+        for (a in applications) {
+            if (a.aid.equals(aidToSelect)) {
+                return ApplicationSelectedState(a)
             }
         }
-        throw new ApplicationNotFoundException();
+        throw ApplicationNotFoundException()
     }
 
+    companion object {
+        private const val TAG = "InitialState"
+    }
 }

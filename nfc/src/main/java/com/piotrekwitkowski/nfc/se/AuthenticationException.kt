@@ -1,4 +1,3 @@
-package com.piotrekwitkowski.nfc.se;
+package com.piotrekwitkowski.nfc.se
 
-public class AuthenticationException extends Exception {
-}
+class AuthenticationException : Exception()

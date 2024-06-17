@@ -1,53 +1,52 @@
-package com.piotrekwitkowski.libraryreader;
+package com.piotrekwitkowski.libraryreader
 
-import android.nfc.Tag;
+import android.nfc.Tag
+import com.piotrekwitkowski.log.Log.i
+import com.piotrekwitkowski.nfc.ByteUtils.concatenate
+import com.piotrekwitkowski.nfc.ByteUtils.toHexString
+import java.io.IOException
 
-import com.piotrekwitkowski.log.Log;
-import com.piotrekwitkowski.nfc.ByteUtils;
-
-import java.io.IOException;
-
-class IsoDep {
-    private static final String TAG = "IsoDep";
-    private final android.nfc.tech.IsoDep mIsoDep;
-
-    private IsoDep(android.nfc.tech.IsoDep isoDep) {
-        mIsoDep = isoDep;
+internal class IsoDep private constructor(private val mIsoDep: android.nfc.tech.IsoDep) {
+    @Throws(IOException::class)
+    fun connect() {
+        i(TAG, "connect()")
+        mIsoDep.connect()
     }
 
-    static IsoDep get(Tag tag) {
-        return new IsoDep(android.nfc.tech.IsoDep.get(tag));
+    @Throws(IOException::class)
+    fun transceive(command: Byte, data: Byte): Response {
+        return transceive(concatenate(command, data))
     }
 
-    void connect() throws IOException {
-        Log.i(TAG, "connect()");
-        mIsoDep.connect();
+    @Throws(IOException::class)
+    fun transceive(command: Byte, data: ByteArray?): Response {
+        return transceive(concatenate(command, data))
     }
 
-    @SuppressWarnings("SameParameterValue")
-    Response transceive(byte command, byte data) throws IOException {
-        return transceive(ByteUtils.concatenate(command, data));
+    @Throws(IOException::class)
+    fun transceive(data: ByteArray?): Response {
+        i(TAG, "--> " + toHexString(data))
+        val response = mIsoDep.transceive(data)
+        i(TAG, "<-- " + toHexString(response))
+        return Response(response)
     }
 
-    Response transceive(byte command, byte[] data) throws IOException {
-        return transceive(ByteUtils.concatenate(command, data));
+    @Throws(IOException::class)
+    fun close() {
+        i(TAG, "close()")
+        mIsoDep.close()
     }
 
-    Response transceive(byte[] data) throws IOException {
-        Log.i(TAG, "--> " + ByteUtils.toHexString(data));
-        byte[] response = mIsoDep.transceive(data);
-        Log.i(TAG, "<-- " + ByteUtils.toHexString(response));
-        return new Response(response);
-    }
+    val historicalBytes: ByteArray
+        get() {
+            i(TAG, "getHistoricalBytes()")
+            return mIsoDep.historicalBytes
+        }
 
-    void close() throws IOException {
-        Log.i(TAG, "close()");
-        mIsoDep.close();
+    companion object {
+        private const val TAG = "IsoDep"
+        fun get(tag: Tag?): IsoDep {
+            return IsoDep(android.nfc.tech.IsoDep.get(tag))
+        }
     }
-
-    byte[] getHistoricalBytes() {
-        Log.i(TAG, "getHistoricalBytes()");
-        return mIsoDep.getHistoricalBytes();
-    }
-
 }

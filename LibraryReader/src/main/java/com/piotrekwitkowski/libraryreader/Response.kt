@@ -1,23 +1,11 @@
-package com.piotrekwitkowski.libraryreader;
+package com.piotrekwitkowski.libraryreader
 
-import java.util.Arrays;
+import java.util.Arrays
 
-class Response {
-    private final byte[] bytes;
+internal class Response(val bytes: ByteArray) {
+    val responseCode: Byte
+        get() = bytes[0]
 
-    Response(byte[] responseBytes) {
-        this.bytes = responseBytes;
-    }
-
-    byte[] getBytes() {
-        return bytes;
-    }
-
-    byte getResponseCode() {
-        return bytes[0];
-    }
-
-    byte[] getData() {
-        return Arrays.copyOfRange(bytes, 1, bytes.length);
-    }
+    val data: ByteArray
+        get() = Arrays.copyOfRange(bytes, 1, bytes.size)
 }

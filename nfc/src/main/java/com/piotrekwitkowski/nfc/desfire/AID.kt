@@ -1,34 +1,28 @@
-package com.piotrekwitkowski.nfc.desfire;
+package com.piotrekwitkowski.nfc.desfire
 
-import com.piotrekwitkowski.nfc.ByteUtils;
+import com.piotrekwitkowski.nfc.ByteUtils
 
-import java.util.Arrays;
+open class AID {
+    @JvmField
+    val bytes: ByteArray?
 
-public class AID {
-    private final byte[] bytes;
-
-    public AID(String aid) throws InvalidParameterException {
-        if (aid.length() == 6) {
-            this.bytes = ByteUtils.toByteArray(aid);
+    constructor(aid: String) {
+        if (aid.length == 6) {
+            this.bytes = ByteUtils.toByteArray(aid)
         } else {
-            throw new InvalidParameterException("AID length should be 6 chars");
+            throw InvalidParameterException("AID length should be 6 chars")
         }
     }
 
-    public AID(byte[] aid) throws InvalidParameterException {
-        if (aid.length == 3) {
-            this.bytes = aid;
+    constructor(aid: ByteArray?) {
+        if (aid!!.size == 3) {
+            this.bytes = aid
         } else {
-            throw new InvalidParameterException("AID length should be 3 bytes");
+            throw InvalidParameterException("AID length should be 3 bytes")
         }
     }
 
-    public boolean equals(AID aid) {
-        return Arrays.equals(this.bytes, aid.bytes);
+    fun equals(aid: AID): Boolean {
+        return bytes.contentEquals(aid.bytes)
     }
-
-    public byte[] getBytes() {
-        return bytes;
-    }
-
 }

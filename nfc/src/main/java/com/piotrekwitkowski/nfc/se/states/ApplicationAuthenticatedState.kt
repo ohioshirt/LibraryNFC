@@ -1,71 +1,75 @@
-package com.piotrekwitkowski.nfc.se.states;
+package com.piotrekwitkowski.nfc.se.states
 
-import com.piotrekwitkowski.log.Log;
-import com.piotrekwitkowski.nfc.ByteUtils;
-import com.piotrekwitkowski.nfc.se.Command;
-import com.piotrekwitkowski.nfc.desfire.Commands;
-import com.piotrekwitkowski.nfc.desfire.File;
-import com.piotrekwitkowski.nfc.desfire.ResponseCodes;
-import com.piotrekwitkowski.nfc.se.Application;
+import com.piotrekwitkowski.log.Log
+import com.piotrekwitkowski.nfc.ByteUtils
+import com.piotrekwitkowski.nfc.desfire.Commands
+import com.piotrekwitkowski.nfc.desfire.File
+import com.piotrekwitkowski.nfc.desfire.ResponseCodes
+import com.piotrekwitkowski.nfc.se.Application
+import com.piotrekwitkowski.nfc.se.Command
 
-public class ApplicationAuthenticatedState extends State {
-    private static final String TAG = "ApplicationAuthenticatedState";
-    private final Application application;
-    private final byte[] sessionKey;
+class ApplicationAuthenticatedState internal constructor(
+    private val application: Application,
+    private val sessionKey: ByteArray?
+) : State() {
+    override fun processCommand(command: Command): CommandResult {
+        Log.i(TAG, "processCommand()")
 
-    ApplicationAuthenticatedState(Application application, byte[] sessionKey) {
-        this.application = application;
-        this.sessionKey = sessionKey;
-    }
-
-    public CommandResult processCommand(Command command) {
-        Log.i(TAG, "processCommand()");
-
-        if (command.getCode() == Commands.READ_DATA) {
-            byte[] commandData = command.getData();
-            if (commandData.length == 7) {
-                return readData(commandData);
+        if (command.code == Commands.READ_DATA) {
+            val commandData = command.data
+            return if (commandData!!.size == 7) {
+                readData(commandData)
             } else {
-                return new CommandResult(this, ResponseCodes.LENGTH_ERROR);
+                CommandResult(
+                    this,
+                    ResponseCodes.LENGTH_ERROR
+                )
             }
         } else {
-            return new CommandResult(this, ResponseCodes.ILLEGAL_COMMAND);
+            return CommandResult(this, ResponseCodes.ILLEGAL_COMMAND)
         }
     }
 
-    private CommandResult readData(byte[] commandData) {
-        byte fileNumber = commandData[0];
-        if (fileNumber == 0) {
-            File file = application.getFile0();
-            return readFile(file, commandData);
+    private fun readData(commandData: ByteArray?): CommandResult {
+        val fileNumber = commandData!![0]
+        if (fileNumber.toInt() == 0) {
+            val file = application.file0
+            return readFile(file, commandData)
         } else {
-            return new CommandResult(this, ResponseCodes.FILE_NOT_FOUND);
+            return CommandResult(this, ResponseCodes.FILE_NOT_FOUND)
         }
     }
 
-    private CommandResult readFile(File file, byte[] commandData) {
-        byte[] offsetBytes = new byte[] {commandData[1], commandData[2], commandData[3]};
-        byte[] lengthBytes = new byte[] {commandData[4], commandData[5], commandData[6]};
-        int offset = ByteUtils.threeBytesToInt(offsetBytes);
-        int length = ByteUtils.threeBytesToInt(lengthBytes);
+    private fun readFile(file: File?, commandData: ByteArray?): CommandResult {
+        val offsetBytes = byteArrayOf(commandData!![1], commandData[2], commandData[3])
+        val lengthBytes = byteArrayOf(commandData[4], commandData[5], commandData[6])
+        val offset = ByteUtils.threeBytesToInt(offsetBytes)
+        val length = ByteUtils.threeBytesToInt(lengthBytes)
 
         try {
-            byte[] data = file.readData(offset, length);
-            data = ByteUtils.concatenate(data, getCRC(data));
-            return new CommandResult(this, ByteUtils.concatenate(ResponseCodes.SUCCESS, data));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new CommandResult(this, ResponseCodes.BOUNDARY_ERROR);
+            var data = file!!.readData(offset, length)
+            data = ByteUtils.concatenate(data, getCRC(data))
+            return CommandResult(this, ByteUtils.concatenate(ResponseCodes.SUCCESS, data))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return CommandResult(this, ResponseCodes.BOUNDARY_ERROR)
         }
     }
 
-    private byte[] getCRC(byte[] data) {
-        Log.i(TAG, "sessionKey: " + ByteUtils.toHexString(sessionKey));
-        Log.i(TAG, "generating CRC for: " + ByteUtils.toHexString(data));
+    private fun getCRC(data: ByteArray?): ByteArray {
+        Log.i(
+            TAG, "sessionKey: " + ByteUtils.toHexString(
+                sessionKey
+            )
+        )
+        Log.i(TAG, "generating CRC for: " + ByteUtils.toHexString(data))
 
         // TODO: implement CRC
-        return new byte[8];
+        return ByteArray(8)
     }
 
+    companion object {
+        private const val TAG = "ApplicationAuthenticatedState"
+    }
 }
 

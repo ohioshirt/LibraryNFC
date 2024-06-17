@@ -1,19 +1,11 @@
-package com.piotrekwitkowski.nfc.se;
+package com.piotrekwitkowski.nfc.se
 
-import java.util.Arrays;
+import java.util.Arrays
 
-public class Command {
-    private final byte[] bytes;
+class Command internal constructor(private val bytes: ByteArray) {
+    val code: Byte
+        get() = bytes[0]
 
-    Command(byte[] bytes) {
-        this.bytes = bytes;
-    }
-
-    public byte getCode() {
-        return bytes[0];
-    }
-
-    public byte[] getData() {
-        return Arrays.copyOfRange(bytes, 1, bytes.length);
-    }
+    val data: ByteArray
+        get() = Arrays.copyOfRange(bytes, 1, bytes.size)
 }

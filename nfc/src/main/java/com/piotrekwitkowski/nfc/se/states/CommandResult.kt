@@ -1,24 +1,16 @@
-package com.piotrekwitkowski.nfc.se.states;
+package com.piotrekwitkowski.nfc.se.states
 
-public class CommandResult {
-    private final State state;
-    private final byte[] response;
+class CommandResult {
+    val state: State
+    val response: ByteArray?
 
-    CommandResult(State state, byte responseCode) {
-        this.state = state;
-        this.response = new byte[]{responseCode};
+    internal constructor(state: State, responseCode: Byte) {
+        this.state = state
+        this.response = byteArrayOf(responseCode)
     }
 
-    public CommandResult(State state, byte[] responseBytes) {
-        this.state = state;
-        this.response = responseBytes;
-    }
-
-    public State getState() {
-        return state;
-    }
-
-    public byte[] getResponse() {
-        return response;
+    constructor(state: State, responseBytes: ByteArray?) {
+        this.state = state
+        this.response = responseBytes
     }
 }

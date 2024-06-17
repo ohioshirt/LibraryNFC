@@ -1,22 +1,21 @@
-package com.piotrekwitkowski.nfc.desfire;
+package com.piotrekwitkowski.nfc.desfire
 
-import com.piotrekwitkowski.nfc.ByteUtils;
+import com.piotrekwitkowski.nfc.ByteUtils
+import java.util.Arrays
 
-import java.util.Arrays;
+open class File protected constructor(data: String) {
+    private val data: ByteArray? = ByteUtils.toByteArray(data)
 
-public class File {
-    private final byte[] data;
-
-    @SuppressWarnings("SameParameterValue")
-    protected File(String data) {
-        this.data = ByteUtils.toByteArray(data);
-    }
-
-    public byte[] readData(int offset, int length) throws ArrayIndexOutOfBoundsException, IllegalArgumentException, NullPointerException {
-        if (length == 0) {
-            return Arrays.copyOfRange(data, offset, data.length);
+    @Throws(
+        ArrayIndexOutOfBoundsException::class,
+        IllegalArgumentException::class,
+        NullPointerException::class
+    )
+    fun readData(offset: Int, length: Int): ByteArray {
+        return if (length == 0) {
+            Arrays.copyOfRange(data, offset, data!!.size)
         } else {
-            return Arrays.copyOfRange(data, offset, offset + length);
+            Arrays.copyOfRange(data, offset, offset + length)
         }
     }
 }

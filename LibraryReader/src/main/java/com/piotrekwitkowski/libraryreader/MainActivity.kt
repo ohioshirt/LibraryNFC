@@ -1,53 +1,58 @@
-package com.piotrekwitkowski.libraryreader;
+package com.piotrekwitkowski.libraryreader
 
-import android.nfc.NfcAdapter;
-import android.nfc.Tag;
-import android.os.Bundle;
-import android.widget.TextView;
+import android.nfc.NfcAdapter
+import android.nfc.NfcAdapter.ReaderCallback
+import android.nfc.Tag
+import android.os.Bundle
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import com.piotrekwitkowski.log.Log.i
+import com.piotrekwitkowski.log.Log.reset
+import com.piotrekwitkowski.log.Log.setLogTextView
+import com.piotrekwitkowski.nfc.desfire.InvalidParameterException
 
-import androidx.appcompat.app.AppCompatActivity;
+class MainActivity : AppCompatActivity(), ReaderCallback {
+    private val libraryReader = LibraryReader(this)
+    private var nfcAdapter: NfcAdapter? = null
 
-import com.piotrekwitkowski.log.Log;
-import com.piotrekwitkowski.nfc.desfire.InvalidParameterException;
-
-public class MainActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
-    private static final String TAG = "MainActivity";
-    private final LibraryReader libraryReader = new LibraryReader(this);
-    private NfcAdapter nfcAdapter;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        TextView logTextView = findViewById(R.id.logTextView);
-        Log.setLogTextView(logTextView);
-        Log.reset(TAG, "onCreate()");
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        nfcAdapter = NfcAdapter.getDefaultAdapter(this)
+        val logTextView = findViewById<TextView>(R.id.logTextView)
+        setLogTextView(logTextView)
+        reset(TAG, "onCreate()")
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Log.i(TAG, "onResume()");
-        nfcAdapter.enableReaderMode(this, this, NfcAdapter.FLAG_READER_NFC_A | NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK, null);
-        Log.i(TAG, "NFC adapter enabled. Waiting for a card...");
+    override fun onResume() {
+        super.onResume()
+        i(TAG, "onResume()")
+        nfcAdapter!!.enableReaderMode(
+            this,
+            this,
+            NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
+            null
+        )
+        i(TAG, "NFC adapter enabled. Waiting for a card...")
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.i(TAG, "onPause()");
-        nfcAdapter.disableReaderMode(this);
-        Log.i(TAG, "NFC adapter disabled.");
+    override fun onPause() {
+        super.onPause()
+        i(TAG, "onPause()")
+        nfcAdapter!!.disableReaderMode(this)
+        i(TAG, "NFC adapter disabled.")
     }
 
-    @Override
-    public void onTagDiscovered(Tag tag) {
-        Log.reset(TAG, "onTagDiscovered()");
+    override fun onTagDiscovered(tag: Tag) {
+        reset(TAG, "onTagDiscovered()")
         try {
-            libraryReader.processTag(tag);
-        } catch (InvalidParameterException e) {
-            Log.i(TAG, e.getMessage());
+            libraryReader.processTag(tag)
+        } catch (e: InvalidParameterException) {
+            i(TAG, e.message!!)
         }
+    }
+
+    companion object {
+        private const val TAG = "MainActivity"
     }
 }

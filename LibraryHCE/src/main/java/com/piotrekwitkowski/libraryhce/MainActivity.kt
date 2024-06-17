@@ -1,21 +1,21 @@
-package com.piotrekwitkowski.libraryhce;
+package com.piotrekwitkowski.libraryhce
 
-import androidx.appcompat.app.AppCompatActivity;
+import android.os.Bundle
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import com.piotrekwitkowski.log.Log.reset
+import com.piotrekwitkowski.log.Log.setLogTextView
 
-import android.os.Bundle;
-import android.widget.TextView;
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        val logTextView = findViewById<TextView>(R.id.logTextView)
+        setLogTextView(logTextView)
+        reset(TAG, "onCreate()")
+    }
 
-import com.piotrekwitkowski.log.Log;
-
-public class MainActivity extends AppCompatActivity {
-    private static final String TAG = "MainActivity";
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        TextView logTextView = findViewById(R.id.logTextView);
-        Log.setLogTextView(logTextView);
-        Log.reset(TAG, "onCreate()");
+    companion object {
+        private const val TAG = "MainActivity"
     }
 }

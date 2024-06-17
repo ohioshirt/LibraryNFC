@@ -1,18 +1,14 @@
-package com.piotrekwitkowski.nfc.se;
+package com.piotrekwitkowski.nfc.se
 
-import com.piotrekwitkowski.log.Log;
+import com.piotrekwitkowski.log.Log
 
-public class Emulation {
-    private static final String TAG = "Emulation";
-    private final SecureElement secureElement;
-
-    public Emulation(SecureElement secureElement) {
-        this.secureElement = secureElement;
+class Emulation(private val secureElement: SecureElement) {
+    fun getResponse(apdu: ByteArray): ByteArray? {
+        Log.i(TAG, "getResponse()")
+        return secureElement.processCommand(Command(apdu))
     }
 
-    public byte[] getResponse(byte[] apdu) {
-        Log.i(TAG, "getResponse()");
-        return secureElement.processCommand(new Command(apdu));
+    companion object {
+        private const val TAG = "Emulation"
     }
-
 }

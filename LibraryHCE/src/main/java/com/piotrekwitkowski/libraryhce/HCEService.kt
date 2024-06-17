@@ -1,61 +1,64 @@
-package com.piotrekwitkowski.libraryhce;
+package com.piotrekwitkowski.libraryhce
 
-import android.nfc.cardemulation.HostApduService;
-import android.os.Bundle;
+import android.nfc.cardemulation.HostApduService
+import android.os.Bundle
+import com.piotrekwitkowski.libraryhce.application.LibraryApplication
+import com.piotrekwitkowski.log.Log.i
+import com.piotrekwitkowski.log.Log.reset
+import com.piotrekwitkowski.nfc.ByteUtils.toHexString
+import com.piotrekwitkowski.nfc.Iso7816
+import com.piotrekwitkowski.nfc.desfire.InvalidParameterException
+import com.piotrekwitkowski.nfc.se.Application
+import com.piotrekwitkowski.nfc.se.Emulation
+import com.piotrekwitkowski.nfc.se.SecureElement
 
-import com.piotrekwitkowski.nfc.se.SecureElement;
-import com.piotrekwitkowski.log.Log;
-import com.piotrekwitkowski.nfc.ByteUtils;
-import com.piotrekwitkowski.nfc.Iso7816;
-import com.piotrekwitkowski.nfc.se.Application;
-import com.piotrekwitkowski.nfc.se.Emulation;
-import com.piotrekwitkowski.nfc.desfire.InvalidParameterException;
-import com.piotrekwitkowski.libraryhce.application.LibraryApplication;
+class HCEService : HostApduService() {
+    private val notifications = NotificationService(this)
 
-public class HCEService extends HostApduService {
-    private static final String TAG = "HCEService";
-    private static boolean firstInteraction = true;
-    private static Emulation emulation;
-    private final NotificationService notifications = new NotificationService(this);
-
-    @Override
-    public byte[] processCommandApdu(byte[] command, Bundle extras) {
-        byte[] response = firstInteraction ? getFirstResponse(command) : getNextResponse(command);
-        Log.i(TAG, "--> " + ByteUtils.toHexString(response));
-        return response;
+    override fun processCommandApdu(command: ByteArray, extras: Bundle): ByteArray {
+        val response =
+            if (firstInteraction) getFirstResponse(command) else getNextResponse(command)!!
+        i(TAG, "--> " + toHexString(response))
+        return response
     }
 
-    private byte[] getFirstResponse(byte[] command) {
-        Log.reset(TAG, "<-- " + ByteUtils.toHexString(command));
-        notifications.createNotificationChannel(this);
-        notifications.show("<--" + ByteUtils.toHexString(command));
+    private fun getFirstResponse(command: ByteArray): ByteArray {
+        reset(TAG, "<-- " + toHexString(command))
+        notifications.createNotificationChannel(this)
+        notifications.show("<--" + toHexString(command))
 
         try {
-            emulation = getEmulation();
-            firstInteraction = false;
-            return Iso7816.RESPONSE_SUCCESS;
-        } catch (InvalidParameterException e) {
-            return Iso7816.RESPONSE_INTERNAL_ERROR;
+            Companion.emulation = this.emulation
+            firstInteraction = false
+            return Iso7816.RESPONSE_SUCCESS
+        } catch (e: InvalidParameterException) {
+            return Iso7816.RESPONSE_INTERNAL_ERROR
         }
     }
 
-    private Emulation getEmulation() throws InvalidParameterException {
-        Application libraryApplication = new LibraryApplication();
-        Application[] applications = new Application[] {libraryApplication};
-        SecureElement seWrapper = new SecureElement(applications);
-        return new Emulation(seWrapper);
+    @get:Throws(InvalidParameterException::class)
+    private val emulation: Emulation
+        get() {
+            val libraryApplication: Application = LibraryApplication()
+            val applications = arrayOf(libraryApplication)
+            val seWrapper = SecureElement(applications)
+            return Emulation(seWrapper)
+        }
+
+    private fun getNextResponse(command: ByteArray): ByteArray? {
+        i(TAG, "<-- " + toHexString(command))
+        notifications.show("<--" + toHexString(command))
+        return Companion.emulation!!.getResponse(command)
     }
 
-    private byte[] getNextResponse(byte[] command) {
-        Log.i(TAG, "<-- " + ByteUtils.toHexString(command));
-        notifications.show("<--" + ByteUtils.toHexString(command));
-        return emulation.getResponse(command);
+    override fun onDeactivated(reason: Int) {
+        i(TAG, "onDeactivated(). Reason: $reason")
+        firstInteraction = true
     }
 
-    @Override
-    public void onDeactivated(int reason) {
-        Log.i(TAG, "onDeactivated(). Reason: " + reason);
-        firstInteraction = true;
+    companion object {
+        private const val TAG = "HCEService"
+        private var firstInteraction = true
+        private var emulation: Emulation? = null
     }
-
 }

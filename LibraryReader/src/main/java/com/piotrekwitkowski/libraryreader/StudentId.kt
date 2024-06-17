@@ -1,83 +1,84 @@
-package com.piotrekwitkowski.libraryreader;
+package com.piotrekwitkowski.libraryreader
 
-import android.content.Context;
+import android.content.Context
+import com.piotrekwitkowski.log.Log.i
+import com.piotrekwitkowski.nfc.ByteUtils.toHexString
+import com.piotrekwitkowski.nfc.ByteUtils.trimEnd
+import com.piotrekwitkowski.nfc.Iso7816
+import com.piotrekwitkowski.nfc.desfire.AESKey
+import com.piotrekwitkowski.nfc.desfire.AID
+import java.io.IOException
 
-import com.piotrekwitkowski.log.Log;
-import com.piotrekwitkowski.nfc.ByteUtils;
-import com.piotrekwitkowski.nfc.Iso7816;
-import com.piotrekwitkowski.nfc.desfire.AID;
-import com.piotrekwitkowski.nfc.desfire.AESKey;
-
-import java.io.IOException;
-import java.util.Arrays;
-
-@SuppressWarnings("SameParameterValue")
-class StudentId {
-    private static final String TAG = "StudentId";
-    private final IsoDep isoDep;
-    enum idForm {PHYSICAL, HCE}
-
-    private StudentId(IsoDep isoDep) {
-        this.isoDep = isoDep;
+internal class StudentId private constructor(private val isoDep: IsoDep) {
+    internal enum class idForm {
+        PHYSICAL, HCE
     }
 
-    static StudentId getStudentId(Context context, IsoDep isoDep) throws Exception {
-        Log.i(TAG, "getStudentId()");
-        isoDep.connect();
-
-        idForm idForm = getIdForm(isoDep);
-        Log.i(TAG, "ID form: "+ idForm);
-
-        if (idForm == StudentId.idForm.PHYSICAL) {
-            return new StudentId(isoDep);
-        } else if (idForm == StudentId.idForm.HCE) {
-            Response response = HCE.selectAndroidApp(context, isoDep);
-            if (Arrays.equals(response.getBytes(), Iso7816.RESPONSE_SUCCESS)) {
-                return new StudentId(isoDep);
-            } else {
-                throw new StudentIdException("HCE Mobile Application select was unsuccessful");
-            }
-        } else {
-            throw new StudentIdException("ID form not supported");
-        }
+    @Throws(IOException::class)
+    fun close() {
+        isoDep.close()
     }
 
-    void close() throws IOException {
-        isoDep.close();
+    @Throws(IOException::class, DESFireReaderException::class)
+    fun selectApplication(aid: AID) {
+        val applicationAid = aid.bytes
+        DESFireReader.selectApplication(this.isoDep, applicationAid)
+        i(TAG, "Application selected: " + toHexString(applicationAid))
     }
 
-    private static idForm getIdForm(IsoDep isoDep) throws StudentIdException {
-        Log.i(TAG, "getIdForm()");
-
-        byte[] historicalBytes = isoDep.getHistoricalBytes();
-        Log.i(TAG, "historicalBytes: " + ByteUtils.toHexString(historicalBytes));
-
-        if (Arrays.equals(historicalBytes, new byte[]{(byte) 0x80})) {
-            return idForm.PHYSICAL;
-        } else if (Arrays.equals(historicalBytes, new byte[]{})) {
-            return idForm.HCE;
-        } else {
-            throw new StudentIdException("id form not recognized");
-        }
+    @Throws(Exception::class)
+    fun authenticateAES(key: AESKey, keyNumber: Int) {
+        val sessionKey = DESFireReader.authenticateAES(this.isoDep, key.key, keyNumber.toByte())
+        i(TAG, "Session key: " + toHexString(sessionKey))
     }
 
-    void selectApplication(AID aid) throws IOException, DESFireReaderException {
-        byte[] applicationAid = aid.getBytes();
-        DESFireReader.selectApplication(this.isoDep, applicationAid);
-        Log.i(TAG, "Application selected: " + ByteUtils.toHexString(applicationAid));
-    }
-
-    void authenticateAES(AESKey key, int keyNumber) throws Exception {
-        byte[] sessionKey = DESFireReader.authenticateAES(this.isoDep, key.getKey(), (byte) keyNumber);
-        Log.i(TAG, "Session key: " + ByteUtils.toHexString(sessionKey));
-    }
-
-    byte[] readData(int fileNumber, int offset, int length) throws IOException, DESFireReaderException {
-        byte[] response = DESFireReader.readData(this.isoDep, fileNumber, offset, length);
+    @Throws(IOException::class, DESFireReaderException::class)
+    fun readData(fileNumber: Int, offset: Int, length: Int): ByteArray {
+        val response = DESFireReader.readData(this.isoDep, fileNumber, offset, length)
         // TODO: check CRC (last 8 bytes)
-        byte[] data = ByteUtils.trimEnd(response, 8);
-        Log.i(TAG, "Data: " + ByteUtils.toHexString(data));
-        return data;
+        val data = trimEnd(response!!, 8)
+        i(TAG, "Data: " + toHexString(data))
+        return data
     }
 
+    companion object {
+        private const val TAG = "StudentId"
+        @Throws(Exception::class)
+        fun getStudentId(context: Context, isoDep: IsoDep): StudentId {
+            i(TAG, "getStudentId()")
+            isoDep.connect()
+
+            val idForm = getIdForm(isoDep)
+            i(TAG, "ID form: $idForm")
+
+            return if (idForm == StudentId.idForm.PHYSICAL) {
+                StudentId(isoDep)
+            } else if (idForm == StudentId.idForm.HCE) {
+                val response = HCE.selectAndroidApp(context, isoDep)
+                if (response?.bytes.contentEquals(Iso7816.RESPONSE_SUCCESS)) {
+                    StudentId(isoDep)
+                } else {
+                    throw StudentIdException("HCE Mobile Application select was unsuccessful")
+                }
+            } else {
+                throw StudentIdException("ID form not supported")
+            }
+        }
+
+        @Throws(StudentIdException::class)
+        private fun getIdForm(isoDep: IsoDep): idForm {
+            i(TAG, "getIdForm()")
+
+            val historicalBytes = isoDep.historicalBytes
+            i(TAG, "historicalBytes: " + toHexString(historicalBytes))
+
+            return if (historicalBytes.contentEquals(byteArrayOf(0x80.toByte()))) {
+                idForm.PHYSICAL
+            } else if (historicalBytes.contentEquals(byteArrayOf())) {
+                idForm.HCE
+            } else {
+                throw StudentIdException("id form not recognized")
+            }
+        }
+    }
 }

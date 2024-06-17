@@ -1,7 +1,3 @@
-package com.piotrekwitkowski.libraryreader;
+package com.piotrekwitkowski.libraryreader
 
-class DESFireReaderException extends Exception {
-    DESFireReaderException(String message) {
-        super(message);
-    }
-}
+internal class DESFireReaderException(message: String?) : Exception(message)

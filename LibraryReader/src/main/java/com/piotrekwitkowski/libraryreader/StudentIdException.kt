@@ -1,7 +1,3 @@
-package com.piotrekwitkowski.libraryreader;
+package com.piotrekwitkowski.libraryreader
 
-class StudentIdException extends Exception {
-    StudentIdException(String message) {
-        super(message);
-    }
-}
+internal class StudentIdException(message: String?) : Exception(message)

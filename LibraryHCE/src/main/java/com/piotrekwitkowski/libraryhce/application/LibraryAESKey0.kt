@@ -1,10 +1,5 @@
-package com.piotrekwitkowski.libraryhce.application;
+package com.piotrekwitkowski.libraryhce.application
 
-import com.piotrekwitkowski.nfc.desfire.InvalidParameterException;
-import com.piotrekwitkowski.nfc.desfire.AESKey;
+import com.piotrekwitkowski.nfc.desfire.AESKey
 
-class LibraryAESKey0 extends AESKey {
-    LibraryAESKey0() throws InvalidParameterException {
-        super("00000000000000000000000000000000");
-    }
-}
+internal class LibraryAESKey0 : AESKey("00000000000000000000000000000000")

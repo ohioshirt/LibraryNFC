@@ -1,8 +1,8 @@
-package com.piotrekwitkowski.nfc.desfire;
+package com.piotrekwitkowski.nfc.desfire
 
-public class Commands {
-    public static final byte SELECT_APPLICATION = (byte) 0x5A;
-    public static final byte AUTHENTICATE_AES = (byte) 0xAA;
-    public static final byte ADDITIONAL_FRAME = (byte) 0xAF;
-    public static final byte READ_DATA = (byte) 0xBD;
+object Commands {
+    const val SELECT_APPLICATION: Byte = 0x5A.toByte()
+    const val AUTHENTICATE_AES: Byte = 0xAA.toByte()
+    const val ADDITIONAL_FRAME: Byte = 0xAF.toByte()
+    const val READ_DATA: Byte = 0xBD.toByte()
 }

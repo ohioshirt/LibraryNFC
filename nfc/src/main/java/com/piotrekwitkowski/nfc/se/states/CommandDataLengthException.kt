@@ -1,4 +1,3 @@
-package com.piotrekwitkowski.nfc.se.states;
+package com.piotrekwitkowski.nfc.se.states
 
-class CommandDataLengthException extends Exception {
-}
+internal class CommandDataLengthException : Exception()

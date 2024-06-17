@@ -1,7 +1,7 @@
-package com.piotrekwitkowski.nfc.se.states;
+package com.piotrekwitkowski.nfc.se.states
 
-import com.piotrekwitkowski.nfc.se.Command;
+import com.piotrekwitkowski.nfc.se.Command
 
-public abstract class State {
-    public abstract CommandResult processCommand(Command c);
+abstract class State {
+    abstract fun processCommand(c: Command): CommandResult
 }

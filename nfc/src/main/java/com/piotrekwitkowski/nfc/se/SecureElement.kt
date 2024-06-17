@@ -1,24 +1,25 @@
-package com.piotrekwitkowski.nfc.se;
+package com.piotrekwitkowski.nfc.se
 
-import com.piotrekwitkowski.log.Log;
-import com.piotrekwitkowski.nfc.se.states.CommandResult;
-import com.piotrekwitkowski.nfc.se.states.InitialState;
-import com.piotrekwitkowski.nfc.se.states.State;
+import com.piotrekwitkowski.log.Log
+import com.piotrekwitkowski.nfc.se.states.InitialState
+import com.piotrekwitkowski.nfc.se.states.State
 
-public class SecureElement {
-    private static final String TAG = "SoftwareSEWrapper";
-    private State state;
+class SecureElement(applications: Array<Application>) {
+    private var state: State?
 
-    public SecureElement(Application[] applications) {
-        this.state = new InitialState(applications);
+    init {
+        this.state = InitialState(applications)
     }
 
-    byte[] processCommand(Command command) {
-        Log.i(TAG, "processCommand()");
+    fun processCommand(command: Command): ByteArray? {
+        Log.i(TAG, "processCommand()")
 
-        CommandResult result = this.state.processCommand(command);
-        this.state = result.getState();
-        return result.getResponse();
+        val result = state!!.processCommand(command)
+        this.state = result.state
+        return result.response
     }
 
+    companion object {
+        private const val TAG = "SoftwareSEWrapper"
+    }
 }
